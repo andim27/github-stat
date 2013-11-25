@@ -17,6 +17,7 @@ __END__
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" rel="stylesheet">
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.js"></script>
 <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="http://code.highcharts.com/highcharts.js"></script>
 </head>
 
 <body>
@@ -36,7 +37,7 @@ __END__
   <%=erb :enter %>
 </div>
 
-<div class="tab-pane active" id="repos">
+<div class="tab-pane" id="repos">
   <%=erb :repos %>
 </div>
 
@@ -56,7 +57,79 @@ __END__
 
 <script type="text/javascript">
 jQuery(document).ready(function ($) {
-$('#tabs').tab();
+          $('#tabs').tab();
+          $('#chart').highcharts({
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'GitHub users statistics'
+            },
+            subtitle: {
+                text: 'Repo-123'
+            },
+            xAxis: {
+                categories: [
+                    'User-1',
+                    'User-2',
+                    'User-3',
+                    'User-4',
+                    'User-5',
+                    'User-6',
+                    'User-7',
+                    'User-8',
+                    'User-9',
+                    'User-10',
+                    'User-11',
+                    'User-12'
+                ]
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Amount'
+                }
+            },
+            tooltip: {
+                headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                    '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',
+                footerFormat: '</table>',
+                shared: true,
+                useHTML: true
+            },
+            plotOptions: {
+                column: {
+                    pointPadding: 0.2,
+                    borderWidth: 0
+                }
+            },
+            credits: {
+              enabled: false
+            },
+            series: [{
+                name: 'Commits',
+                data: [49, 71, 106, 129, 144, 176, 135, 148, 216, 194, 95, 54]
+
+            }, {
+                name: 'Pull request',
+                data: [83, 78, 98, 93, 106, 84, 105, 104, 91, 83, 106, 92]
+
+            }, {
+                name: 'Reviews',
+                data: [48, 38, 39, 41, 47, 48, 59, 59, 52, 65, 59, 51]
+
+            }, {
+                name: 'Pushes',
+                data: [42, 33, 34, 39, 56, 75, 57, 60, 47, 39, 46, 51]
+
+            }, {
+                name: 'Comments',
+                data: [42, 33, 34, 39, 52, 75, 57, 60, 47, 39, 46, 51]
+
+            }
+            ]
+        });
 });
 </script>
 </div> <!-- container -->
@@ -69,8 +142,7 @@ $('#tabs').tab();
 
 
 @@users_chart
-<h1>USERS CHART DIAGRAM</h1>
-
+<div id="chart"></div>
 
 @@enter
   <h1>Enter parameters</h1>
@@ -85,9 +157,7 @@ $('#tabs').tab();
   </p>
 
 @@active_users
-  <h1>Active users statistics</h1>
-  <p>Stat  content</p>
-    <%= erb :users_chart %>
+   <%= erb :users_chart %>
 
 
 
