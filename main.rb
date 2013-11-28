@@ -1,10 +1,17 @@
 require 'sinatra'
+require "sinatra/json"
 require 'erb'
 
 get '/' do
  erb :index
 end
 
+get '/activeusers' do
+  json ({:user=>'user-1',:commits=>23,:pull_request=>5},:encoder => :to_json, :content_type => :js)
+
+  #content_type :json
+  #{ :user-1 => 'value1', :user-2 => 'value2' }.to_json
+end
 
 __END__
 
@@ -57,6 +64,9 @@ __END__
 
 <script type="text/javascript">
 jQuery(document).ready(function ($) {
+          $('#show_id').click(function (){
+            <%= erb :show_js %>
+          });
           $('#tabs').tab();
           $('#chart').highcharts({
             chart: {
@@ -140,6 +150,10 @@ jQuery(document).ready(function ($) {
 </body>
 </html>
 
+@@show_js
+  $.getJSON("/activeusers",function (data) {alert(data);});
+
+
 
 @@users_chart
 <div id="chart"></div>
@@ -157,6 +171,20 @@ jQuery(document).ready(function ($) {
   </p>
 
 @@active_users
+<br>
+<div class="row">
+  <div class="col-xs-6 col-md-4">
+
+  </div>
+  <div class="col-xs-6 col-md-4">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default">Last Hour</button>
+        <button type="button" class="btn btn-default">Last Day</button>
+      </div>
+      <button id="show_id" type="button" class="btn btn-primary">Show</button>
+  </div>
+  <div class="col-xs-6 col-md-4"></div>
+</div>
    <%= erb :users_chart %>
 
 
