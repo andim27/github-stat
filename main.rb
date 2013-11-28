@@ -1,13 +1,26 @@
 require 'sinatra'
 require "sinatra/json"
 require 'erb'
+require 'octokit'
 
+BASE_REPO='https://github.com/'
 get '/' do
  erb :index
 end
 
 get '/activeusers' do
-  json ({:user=>'user-1',:commits=>23,:pull_request=>5},:encoder => :to_json, :content_type => :js)
+  repo_name   = params[:repo_name].gsub(BASE_REPO,"")
+  time_period = params[:time_period]
+  client=Octokit::Client.new
+  #-- if Faraday error occur
+  #--Octokit.connection_options[:ssl] = {:ca_file => './ssl/cert.pem'}
+  #--or OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+  stat = client.contributors_stats(repo_name)
+  users=[]
+  stat.each do |u|
+    users << u.author.login
+  end
+  json ({:users=>users,:commits=>23,:pull_request=>5,:repo_name=>repo_name, :encoder => :to_json, :content_type => :js})
 
   #content_type :json
   #{ :user-1 => 'value1', :user-2 => 'value2' }.to_json
@@ -34,8 +47,7 @@ __END__
 <h1> GitHub User analyzer</h1>
 <div id="content">
 <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
-<li class="active"><a href="#enter" data-toggle="tab">Enter params:</a></li>
-<li><a href="#repos" data-toggle="tab">Repos</a></li>
+<li class="active"><a href="#enter" data-toggle="tab">Repos:</a></li>
 <li><a href="#active_users" data-toggle="tab">Active Users</a></li>
 <li><a href="#author" data-toggle="tab">Author</a></li>
 </ul>
@@ -44,9 +56,6 @@ __END__
   <%=erb :enter %>
 </div>
 
-<div class="tab-pane" id="repos">
-  <%=erb :repos %>
-</div>
 
 <div class="tab-pane" id="active_users">
   <%= erb :active_users %>
@@ -64,6 +73,11 @@ __END__
 
 <script type="text/javascript">
 jQuery(document).ready(function ($) {
+          repo_name_start="rails/rails";
+          time_period=1;
+          $('#repo_name').val(repo_name_start);
+          $('#time_hour').click(function(){time_period=1})
+          $('#time_day').click(function(){time_period=2})
           $('#show_id').click(function (){
             <%= erb :show_js %>
           });
@@ -150,19 +164,19 @@ jQuery(document).ready(function ($) {
 </body>
 </html>
 
-@@show_js
-  $.getJSON("/activeusers",function (data) {alert(data);});
-
 
 
 @@users_chart
 <div id="chart"></div>
 
 @@enter
-  <h1>Enter parameters</h1>
-  <p>
-    <a href="http://github.com/rails"> github.com/rails</a>
-  </p>
+  <h1>Name repository</h1>
+  <div class="input-group">
+  <span class="input-group-addon">https://github.com/</span>
+  <input id="repo_name" type="text" class="form-control" >
+</div>
+
+
 
 @@repos
   <h1>Current repo</h1>
@@ -173,13 +187,11 @@ jQuery(document).ready(function ($) {
 @@active_users
 <br>
 <div class="row">
-  <div class="col-xs-6 col-md-4">
-
-  </div>
+  <div class="col-xs-6 col-md-4"></div>
   <div class="col-xs-6 col-md-4">
       <div class="btn-group">
-        <button type="button" class="btn btn-default">Last Hour</button>
-        <button type="button" class="btn btn-default">Last Day</button>
+        <button id="time_hour" type="button" class="btn btn-default">Last Hour</button>
+        <button id="time_day" type="button" class="btn btn-default">Last Day</button>
       </div>
       <button id="show_id" type="button" class="btn btn-primary">Show</button>
   </div>
@@ -193,3 +205,11 @@ jQuery(document).ready(function ($) {
 <p>Makarevich Andrey Stepanovich</p>
 <p>Ukraine,Kharkov</p>
 <p>skype:andrey_makarevich</p>
+
+
+
+@@show_js
+  $.getJSON("/activeusers",{time_period:time_period,repo_name:$('#repo_name').val()})
+  .done(function (data) {alert(data);})
+  .fail(function(){alert('Error connect to server!')});
+
