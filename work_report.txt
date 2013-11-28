@@ -1,0 +1,17 @@
+
+25.11.13 - 1 hour
+Common analize
+
+26.11.13 - 3 hour
+Research api.GitHub
+First code
+
+27.11.13 - 2 hour
+Research of Octokit gem.
+Try to get statistics of pull request manualy from terminal by curl&Octokit.
+There is no such feature in api:
+http://stackoverflow.com/questions/13094712/github-api-get-number-of-pull-requests
+
+27.11.13 - 4 hour
+Manual test github api from Octokit gem
+Add json send to main.rb
