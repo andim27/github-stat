@@ -2,6 +2,7 @@ require 'sinatra'
 require "sinatra/json"
 require 'erb'
 require 'octokit'
+require 'date'
 
 BASE_REPO='https://github.com/'
 get '/' do
@@ -20,6 +21,16 @@ get '/activeusers' do
   stat.each do |u|
     users << u.author.login
   end
+  timeto=DateTime.now.to_s
+  if time_period ==1
+  #--------------------1 hour ago--------------
+      timefrom=(Time.now-3600).to_s #-----1 hour is 3600sek
+  else
+  #--------------------day---------------
+      timefrom=(DateTime.now-1).to_s
+  end
+  commits=client.commits_between(repo_name,timefrom,timeto)
+  requests=client.pull_requests(repo_name)
   json ({:users=>users,:commits=>23,:pull_request=>5,:repo_name=>repo_name, :encoder => :to_json, :content_type => :js})
 
   #content_type :json
@@ -210,6 +221,6 @@ jQuery(document).ready(function ($) {
 
 @@show_js
   $.getJSON("/activeusers",{time_period:time_period,repo_name:$('#repo_name').val()})
-  .done(function (data) {alert(data);})
+  .done(function (data) {console.log(data);alert(data);})
   .fail(function(){alert('Error connect to server!')});
 
