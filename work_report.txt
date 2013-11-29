@@ -15,3 +15,7 @@ http://stackoverflow.com/questions/13094712/github-api-get-number-of-pull-reques
 28.11.13 - 4 hour
 Manual test github api from Octokit gem
 Add json send to main.rb
+
+29.11.13 - 4 hour
+Development : select part/
+Manual test: try to access from irb to github repos
