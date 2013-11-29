@@ -9,6 +9,21 @@ get '/' do
  erb :index
 end
 
+#---------------------Format output data---------------------------
+#--  [ users:active_users,
+#     commits:x,
+#     pull_requests:x,
+#     reviews:x,
+#     pushes:x,
+#     comments:x
+#   ]
+# -------------
+#  active_users=[ {name:x,actions:{commits:x,pull_requests:x}},
+#                 {name:x,actions:{commits:x,pull_requests:x}
+#                 {name:x,actions:{commits:x,pull_requests:x}
+#               ]
+#---------------------------------------------------------------------
+
 get '/activeusers' do
  begin
   repo_name   = params[:repo_name].gsub(BASE_REPO,"")
@@ -55,6 +70,7 @@ get '/activeusers' do
     users_active <<  {:name=>u.name,:actions=>{:commits=>author_commits,:pull_requests=>author_pull_requests}}
   end
   json ({:users=>users_active,:commits=>commits.size,:pull_request=>requests_active.size,:repo_name=>repo_name, :encoder => :to_json, :content_type => :js})
+ #--Sometimes github server return error 500.Possible connection limit exhausted
  rescue Exception => e
    json ({:users=>users_active,:commits=>commits.size,:pull_request=>requests_active.size,:repo_name=>repo_name,:error=>e.message,:error_full_mes=>e.backtrace.inspect,   :encoder => :to_json, :content_type => :js})
  end
