@@ -26,7 +26,7 @@ end
 
 get '/activeusers' do
  begin
-  repo_name   = params[:repo_name].gsub(BASE_REPO,"")
+  repo_name   = params[:repo_name].gsub(BASE_REPO,'')
   time_period = params[:time_period]
   client=Octokit::Client.new
   #-- if Faraday error occur
@@ -37,6 +37,7 @@ get '/activeusers' do
   stat.each do |u|
     users << {:name=>u.author.login,:actions=>{:commits=>0,:pull_requests=>0}}
   end
+  users_active=users
   time_to=DateTime.now
   if time_period ==1
   #--------------------1 hour ago--------------
@@ -49,25 +50,26 @@ get '/activeusers' do
   requests=client.pull_requests(repo_name)
 
   requests.each do |r|
-    requests_active << r if (time_to <=r.created_at)&&(time_from>=r.created.at)
+    requests_active << r if (time_to <= DateTime.parse(r.created_at.to_s))&&(time_from>=DateTime.parse(r.created_at.to_s))
   end
   #----prepare active users fo output---
+  users_active=[] #---if rescue retun upper users else fill this block
   users.each do |u|
     author_commits=0
     #---count for author's commits----
     commits.each do |c|
-      if u.name==c.author.login
+      if u[:name]==c.author.login
         author_commits+=1
       end
     end
     #---count for author's pull request
     author_pull_requests=0
     requests_active.each do |r|
-      if r.head.user.login ==u.name
+      if r.head.user.login ==u[:name]
         author_pull_requests+=1
       end
     end
-    users_active <<  {:name=>u.name,:actions=>{:commits=>author_commits,:pull_requests=>author_pull_requests}}
+    users_active <<  {:name=>u[:name],:actions=>{:commits=>author_commits,:pull_requests=>author_pull_requests}}
   end
   json ({:users=>users_active,:commits=>commits.size,:pull_request=>requests_active.size,:repo_name=>repo_name, :encoder => :to_json, :content_type => :js})
  #--Sometimes github server return error 500.Possible connection limit exhausted
