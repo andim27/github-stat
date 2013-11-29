@@ -10,6 +10,7 @@ get '/' do
 end
 
 get '/activeusers' do
+ begin
   repo_name   = params[:repo_name].gsub(BASE_REPO,"")
   time_period = params[:time_period]
   client=Octokit::Client.new
@@ -17,21 +18,47 @@ get '/activeusers' do
   #--Octokit.connection_options[:ssl] = {:ca_file => './ssl/cert.pem'}
   #--or OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
   stat = client.contributors_stats(repo_name)
-  users=[]
+  users,users_active,commits,requests_active=[],[],[],[]
   stat.each do |u|
-    users << u.author.login
+    users << {:name=>u.author.login,:actions=>{:commits=>0,:pull_requests=>0}}
   end
-  timeto=DateTime.now.to_s
+  time_to=DateTime.now
   if time_period ==1
   #--------------------1 hour ago--------------
-      timefrom=(Time.now-3600).to_s #-----1 hour is 3600sek
+      time_from=(Time.now-3600) #-----1 hour is 3600sek
   else
   #--------------------day---------------
-      timefrom=(DateTime.now-1).to_s
+      time_from=(DateTime.now-1)
   end
-  commits=client.commits_between(repo_name,timefrom,timeto)
+  commits=client.commits_between(repo_name,time_from.to_s,time_to.to_s)
   requests=client.pull_requests(repo_name)
-  json ({:users=>users,:commits=>23,:pull_request=>5,:repo_name=>repo_name, :encoder => :to_json, :content_type => :js})
+
+  requests.each do |r|
+    requests_active << r if (time_to <=r.created_at)&&(time_from>=r.created.at)
+  end
+  #----prepare active users fo output---
+  users.each do |u|
+    author_commits=0
+    #---count for author's commits----
+    commits.each do |c|
+      if u.name==c.author.login
+        author_commits+=1
+      end
+    end
+    #---count for author's pull request
+    author_pull_requests=0
+    requests_active.each do |r|
+      if r.head.user.login ==u.name
+        author_pull_requests+=1
+      end
+    end
+    users_active <<  {:name=>u.name,:actions=>{:commits=>author_commits,:pull_requests=>author_pull_requests}}
+  end
+  json ({:users=>users_active,:commits=>commits.size,:pull_request=>requests_active.size,:repo_name=>repo_name, :encoder => :to_json, :content_type => :js})
+ rescue Exception => e
+   json ({:users=>users_active,:commits=>commits.size,:pull_request=>requests_active.size,:repo_name=>repo_name,:error=>e.message,:error_full_mes=>e.backtrace.inspect,   :encoder => :to_json, :content_type => :js})
+ end
+
 
   #content_type :json
   #{ :user-1 => 'value1', :user-2 => 'value2' }.to_json
@@ -213,14 +240,17 @@ jQuery(document).ready(function ($) {
 
 
 @@author_content
-<p>Makarevich Andrey Stepanovich</p>
+<p><strong>Makarevich Andrey Stepanovich</strong></p>
 <p>Ukraine,Kharkov</p>
+<p>email:a2772@gmail.com</p>
 <p>skype:andrey_makarevich</p>
 
 
 
 @@show_js
   $.getJSON("/activeusers",{time_period:time_period,repo_name:$('#repo_name').val()})
-  .done(function (data) {console.log(data);alert(data);})
+  .done(function (data) {
+      console.log(data);alert(data);
+  })
   .fail(function(){alert('Error connect to server!')});
 
